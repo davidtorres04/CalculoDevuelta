@@ -11,14 +11,16 @@ import javax.swing.table.DefaultTableModel;
 public class FrmDevuelta extends JFrame {
 
     JComboBox cmbDenominacion;
-    int[] denominaciones = {100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50};
+    int[] denominaciones = { 100000, 50000, 20000, 10000, 5000, 2000, 1000, 500, 200, 100, 50 };
     int[] existencias = new int[denominaciones.length];
-    JTextField txtExistencia;
+    JTextField txtExistencia, txtDevolver;
+    String[] encabezados = { "Cantidad", "Presentación", "Denominación" };
+    JTable tblDevuelta;
 
-    //metodo constructor
-    public FrmDevuelta(){
+    // metodo constructor
+    public FrmDevuelta() {
 
-        setSize(500,400);
+        setSize(500, 400);
         setTitle("Cálculo Devuelta");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(null);
@@ -47,7 +49,7 @@ public class FrmDevuelta extends JFrame {
         lblDevolver.setBounds(10, 70, 150, 25);
         add(lblDevolver);
 
-        JTextField txtDevolver = new JTextField();
+        txtDevolver = new JTextField();
         txtDevolver.setBounds(220, 70, 100, 25);
         add(txtDevolver);
 
@@ -55,45 +57,41 @@ public class FrmDevuelta extends JFrame {
         btnDevolver.setBounds(330, 70, 100, 25);
         add(btnDevolver);
 
-        JTable tblDevuelta = new JTable();
+        tblDevuelta = new JTable();
         JScrollPane spDevuelta = new JScrollPane(tblDevuelta);
         spDevuelta.setBounds(10, 100, 470, 150);
         add(spDevuelta);
 
-        String[] encabezados = {"Cantidad", "Presentación", "Denominación"};
         DefaultTableModel dtm = new DefaultTableModel(null, encabezados);
         tblDevuelta.setModel(dtm);
 
         // Eventos
 
-          btnExistencia.addActionListener(e -> {
+        btnExistencia.addActionListener(e -> {
             actualizarExistencia();
-          });
+        });
 
-          btnDevolver.addActionListener(e -> {
+        btnDevolver.addActionListener(e -> {
             calcularDevuelta();
-          });
+        });
 
-          cmbDenominacion.addActionListener(e -> {
+        cmbDenominacion.addActionListener(e -> {
             consultarExistencia();
-          });
-
+        });
 
     }
 
     private void consultarExistencia() {
 
-        if (cmbDenominacion.getSelectedIndex() >=0) {
-            //JOptionPane.showMessageDialog(null, denominaciones[cmbDenominacion.getSelectedIndex()]);
+        if (cmbDenominacion.getSelectedIndex() >= 0) {
             txtExistencia.setText(String.valueOf(existencias[cmbDenominacion.getSelectedIndex()]));
         }
-        
+
     }
 
     private void actualizarExistencia() {
 
-        //JOptionPane.showMessageDialog(null, "Hizo clic en ACTUALIZAR EXISTENCIA");
-        if (cmbDenominacion.getSelectedIndex() >= 0){
+        if (cmbDenominacion.getSelectedIndex() >= 0) {
             existencias[cmbDenominacion.getSelectedIndex()] = Integer.parseInt(txtExistencia.getText());
         }
 
@@ -101,7 +99,56 @@ public class FrmDevuelta extends JFrame {
 
     private void calcularDevuelta() {
 
-        JOptionPane.showMessageDialog(null, "Hizo clic en CALCULAR");
+        // obtener valor a devolver
+        int devuelta = Integer.parseInt(txtDevolver.getText());
+        int[] cantidadesDevuelta = new int[denominaciones.length];
+
+        for (int i = 0; i < denominaciones.length; i++) {
+            if (devuelta >= denominaciones[i]) {
+                int cantidadNecesaria = (int) (devuelta / denominaciones[i]);
+                /*
+                 * if (existencias[i] >= cantidadNecesaria) {
+                 * cantidadesDevuelta[i] = cantidadNecesaria;
+                 * } else {
+                 * cantidadesDevuelta[i] = existencias[i];
+                 * }
+                 */
+                cantidadesDevuelta[i] = existencias[i] >= cantidadNecesaria ? cantidadNecesaria : existencias[i];
+                devuelta -= cantidadesDevuelta[i] * denominaciones[i];
+                existencias[i] -= cantidadesDevuelta[i];
+                if (devuelta == 0) {
+                    break;
+                }
+            }
+        }
+
+        // Contar las denominacones utilizadas
+        int totalDenominaciones = 0;
+        for (int i = 0; i < denominaciones.length; i++) {
+            if (cantidadesDevuelta[i] > 0) {
+                totalDenominaciones++;
+            }
+        }
+
+        // Calcular la matriz de resultados
+        String[][] resultado = new String[totalDenominaciones][3];
+        int fila = 0;
+        for (int i = 0; i < denominaciones.length; i++) {
+            if (cantidadesDevuelta[i] > 0) {
+                resultado[fila][0] = String.valueOf(cantidadesDevuelta[i]);
+                resultado[fila][1] = denominaciones[i] >= 2000 ? "Billete" : "Moneda";
+                resultado[fila][2] = String.valueOf(denominaciones[i]);
+                fila++;
+            }
+        }
+
+        // Mostrar el resultado
+        DefaultTableModel dtm = new DefaultTableModel(resultado, encabezados);
+        tblDevuelta.setModel(dtm);
+
+        if (devuelta > 0) {
+            JOptionPane.showMessageDialog(null,"Quedó pendiente $" + devuelta);
+        }
 
     }
 
